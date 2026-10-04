@@ -71,3 +71,15 @@ python -m chess_trainer report --user sleepy_micha
 | `chess_trainer/plan.py` | 365-Tage-Plan und Rating-Projektion |
 | `chess_trainer/report.py` | HTML-Report, CSV-Plan, JSON-Profil |
 | `tests/make_fixture.py` | erzeugt künstliche Testpartien (Stockfish gegen sich selbst) |
+
+## Web-App (Vercel)
+
+Der Ordner `web/` enthält dieselbe Analyse als statische Web-App: Die Partien werden im Browser von der
+Chess.com-API geladen (alternativ PGN-Upload), Stockfish läuft als WebAssembly im Browser
+(`web/vendor/stockfish-19-lite-single.*`), Ergebnisse werden pro Partie in IndexedDB gecacht.
+Kein Server, kein Build-Schritt – auf Vercel als Projekt mit *Root Directory* `web` deployen.
+
+Lokal testen: `cd web && python3 -m http.server 8000` → http://localhost:8000
+
+Die Inhalte (GMs, Repertoires, Lehrpläne, Texte) kommen aus dem Python-Paket; nach Änderungen dort
+`python scripts/build_web_data.py` ausführen, um `web/data.js` neu zu erzeugen.

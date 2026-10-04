@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Elo-Trainer</title>
+<meta name="description" content="Chess.com-Partien mit Stockfish analysieren: Spielstil, typische Fehler, passende Eröffnungen und GMs, 1-Stunden-Trainingsplan.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♞</text></svg>">
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e3e0d8;--acc:#2f6f4f;--acc2:#b4532a;--bad:#c0392b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141516;--card:#1e2022;--ink:#ececec;--mute:#9a9ba0;--line:#2d3033;--acc:#5fb98a;--acc2:#e08a5f;--bad:#e5675a}}
+:root[data-theme="dark"]{--bg:#141516;--card:#1e2022;--ink:#ececec;--mute:#9a9ba0;--line:#2d3033;--acc:#5fb98a;--acc2:#e08a5f;--bad:#e5675a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:2rem;margin:.2em 0;line-height:1.2}
+h2{margin:2.2em 0 .6em;font-size:1.4rem;border-bottom:2px solid var(--line);padding-bottom:.3em}
+h3{margin:1.2em 0 .4em}
+.mute{color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+form.card{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end}
+label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--mute)}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 16px;background:var(--acc);color:#fff;cursor:pointer}
+.btn.secondary{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+.btn:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#progresswrap{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:10px}
+#progress{height:100%;width:0;background:var(--acc);transition:width .2s}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:1.6rem}.kpi span{color:var(--mute);font-size:.85rem}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600}.tbl{overflow-x:auto}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;min-width:60px}.bar i{display:block;height:100%;background:var(--acc)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.pos{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:16px;align-items:start}
+@media(max-width:620px){.pos{grid-template-columns:1fr}}
+.boardwrap svg{width:100%;height:auto;max-width:260px;display:block;border-radius:4px}
+.tag{display:inline-block;font-size:.78rem;padding:1px 8px;border-radius:999px;border:1px solid var(--line);margin:2px 4px 2px 0}
+.bad{color:var(--bad)}.good{color:var(--acc)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:6px 0;padding:6px 12px}
+.pos details{margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.day{border-top:1px dashed var(--line);padding:6px 0}
+.cat{display:inline-block;min-width:105px;font-weight:600}
+.note{border-left:4px solid var(--acc2);padding:8px 14px;background:var(--card);border-radius:6px}
+code{font-size:.88rem;overflow-wrap:anywhere}
+a{color:var(--acc)}
+footer{margin-top:60px;font-size:.8rem;color:var(--mute)}
+</style>
+</head>
+<body>
+<main>
+  <p class="mute">Schach-Trainingsanalyse</p>
+  <h1>Elo-Trainer</h1>
+  <p>Lädt deine Chess.com-Partien, analysiert jeden Zug mit Stockfish direkt in deinem Browser und zeigt dir deinen Spielstil,
+    deine typischen Fehler mit den besseren Zügen, passende GM-Eröffnungen und Vorbilder sowie einen 365-Tage-Trainingsplan
+    mit 1 Stunde pro Tag.</p>
+
+  <form id="form" class="card">
+    <label>Chess.com-Benutzer<input id="user" value="sleepy_micha" required autocomplete="off"></label>
+    <label>Zeitkontrolle
+      <select id="tc"><option value="rapid">Rapid</option><option value="blitz">Blitz</option><option value="bullet">Bullet</option><option value="daily">Täglich</option></select>
+    </label>
+    <label>Neueste Partien (leer = alle)<input id="max" type="number" min="1" value="50"></label>
+    <label>Suchtiefe
+      <select id="depth"><option value="8">8 – schnell</option><option value="10" selected>10 – Standard</option><option value="12">12 – gründlich</option><option value="14">14 – sehr gründlich</option></select>
+    </label>
+    <label>Ziel-Wertung<input id="target" type="number" value="2600" min="800" max="3000"></label>
+    <div class="row"><button id="run" class="btn" type="submit">Analysieren</button>
+      <button id="cancel" class="btn secondary" type="button" hidden>Abbrechen</button></div>
+  </form>
+  <p class="mute">Alternativ eine PGN-Datei (Chess.com-Archiv → Herunterladen) laden:
+    <input id="pgn" type="file" accept=".pgn,text/plain"></p>
+  <div id="status" class="mute" aria-live="polite"></div>
+  <div id="progresswrap" hidden><div id="progress"></div></div>
+  <p class="mute">Bereits analysierte Partien werden in deinem Browser gespeichert – beim nächsten Mal geht es deutlich schneller.</p>
+
+  <div id="report"></div>
+
+  <footer>
+    Daten: Chess.com Published-Data API · Engine: <a href="https://github.com/nmrugg/stockfish.js">Stockfish.js</a>
+    (<a href="vendor/STOCKFISH-LICENSE.txt">GPLv3</a>) · Züge: <a href="https://github.com/jhlywa/chess.js">chess.js</a>
+    (<a href="vendor/CHESSJS-LICENSE.txt">BSD</a>) · Kein offizielles Produkt von Chess.com.
+  </footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
